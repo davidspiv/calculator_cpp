@@ -99,37 +99,37 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
   return outputQueue;
 }
 
-double evalRpnNotation(deque<string> rpnNotation) {
+double evalRpnNotation(const deque<Token> &rpnNotation) {
   stack<double> result;
 
-  for (const string &token : rpnNotation) {
-    if (isNumeric(token) || (token.length() > 1 && isNumeric(token))) {
-      result.push(stod(token));
+  for (const Token &token : rpnNotation) {
+    if (token.type == value) {
+      result.push(stod(token.symbol));
     } else {
       const double operandB = result.top();
       result.pop();
+
+      if (token.symbol == "NEG") {
+        result.push(operandB * -1.0);
+        continue;
+      }
+
       const double operandA = result.top();
       result.pop();
 
-      switch (token[0]) {
-        case '+':
-          result.push(operandA + operandB);
-          break;
-        case '-':
-          result.push(operandA - operandB);
-          break;
-        case '*':
-          result.push(operandA * operandB);
-          break;
-        case '/':
-          if (!operandB && operandA) {
-            throw invalid_argument("ERROR: unable to divide by zero");
-          }
-          result.push(operandA / operandB);
-          break;
-
-        default:
-          throw invalid_argument("ERROR: unrecognized non-numeric");
+      if (token.symbol == "+") {
+        result.push(operandA + operandB);
+      } else if (token.symbol == "-") {
+        result.push(operandA - operandB);
+      } else if (token.symbol == "*") {
+        result.push(operandA * operandB);
+      } else if (token.symbol == "/") {
+        if (!operandB && operandA) {
+          throw invalid_argument("ERROR: unable to divide by zero");
+        }
+        result.push(operandA / operandB);
+      } else {
+        throw invalid_argument("ERROR: unrecognized non-numeric");
       }
     }
   }
@@ -227,11 +227,11 @@ int main() {
   // should still work even with invalid chars
   const deque<Token> algNotation = lexer(inputAsString);
   const deque<Token> rpnNotation = shuntingYard(algNotation);
-  //   const double result = evalRpnNotation(rpnNotation);
+  const double result = evalRpnNotation(rpnNotation);
 
-  for (const Token &token : rpnNotation) {
-    print(token.symbol);
-  }
+  // for (const Token &token : rpnNotation) {
+  //   print(token.symbol);
+  // }
 
-  //   print(result, "Answer: ");
+  print(result, "Answer: ");
 }
