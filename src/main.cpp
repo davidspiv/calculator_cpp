@@ -12,20 +12,19 @@ using namespace std;
 enum tokenType { value, unaryOp, binaryOp };
 
 struct Token {
-  string text;
+  string symbol;
   tokenType type;
 };
 
-bool isNumeric(string token) {
-  if (!token.empty() && (isdigit(token[0]) || token[0] == '.')) {
+bool isNumeric(string symbols) {
+  if (!symbols.empty() && (isdigit(symbols[0]) || symbols[0] == '.')) {
     return true;
   }
-  return token.size() > 1 && (isdigit(token[1]) || token[1] == '.');
+  return symbols.size() > 1 && (isdigit(symbols[1]) || symbols[1] == '.');
 }
 
-// Removes unary negation op (-) and whitespace
-deque<string> tokenize(const string &inputAsString) {
-  deque<string> tokens;
+deque<Token> lexer(const string &inputAsString) {
+  deque<Token> tokens;
   string valueTokenBuffer = "";
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
@@ -38,16 +37,17 @@ deque<string> tokenize(const string &inputAsString) {
 
     if (!isNumeric(symbol) || i == lastIndex) {
       if (!valueTokenBuffer.empty()) {
-        tokens.push_back(valueTokenBuffer);
+        tokens.push_back({valueTokenBuffer, value});
         valueTokenBuffer.clear();
       }
 
       if ((symbol == "-" && tokens.empty()) ||
-          (symbol == "-" && (tokens.empty() || (!isNumeric(tokens.back()) &&
-                                                tokens.back() != ")")))) {
-        valueTokenBuffer = '-';
+          (symbol == "-" &&
+           (tokens.empty() ||
+            (tokens.back().type != value && tokens.back().symbol != ")")))) {
+        tokens.push_back({"NEG", binaryOp});
       } else if (symbol != " " && (!isNumeric(symbol) || symbol == ")")) {
-        tokens.push_back(symbol);
+        tokens.push_back({symbol, binaryOp});
       }
     }
   }
@@ -206,7 +206,7 @@ int main() {
   //   deque<string> algNotation;
   //   do {
   //     const string inputAsString = getString("Enter Expression: ");
-  //     algNotation = tokenize(inputAsString);
+  //     algNotation = lexer(inputAsString);
   //   } while (!validAlgNotation(algNotation));
 
   //   const deque<string> rpnNotation = shuntingYard(algNotation);
@@ -220,12 +220,12 @@ int main() {
 
   // TEST
   const string inputAsString = getString("Enter Expression: ");
-  const deque<string> algNotation = tokenize(inputAsString);
-
-  for (string token : algNotation) {
-    print(token);
-  }
+  const deque<Token> algNotation = lexer(inputAsString);
   //   const deque<string> rpnNotation = shuntingYard(algNotation);
+
+  for (Token token : algNotation) {
+    print(token.symbol);
+  }
 
   //   const double result = evalRpnNotation(rpnNotation);
   //   print(result, "Answer: ");
