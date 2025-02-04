@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "include/io.h"
+#include "../include/io.h"
 
 using namespace std;
 
