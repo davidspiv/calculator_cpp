@@ -16,11 +16,11 @@ struct Token {
   tokenType type;
 };
 
-bool isNumeric(string symbols) {
-  if (!symbols.empty() && (isdigit(symbols[0]) || symbols[0] == '.')) {
+bool isNumeric(string symbol) {
+  if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
     return true;
   }
-  return symbols.size() > 1 && (isdigit(symbols[1]) || symbols[1] == '.');
+  return symbol.size() > 1 && (isdigit(symbol[1]) || symbol[1] == '.');
 }
 
 deque<Token> lexer(const string &inputAsString) {
@@ -54,9 +54,9 @@ deque<Token> lexer(const string &inputAsString) {
   return tokens;
 }
 
-deque<string> shuntingYard(deque<string> inputQueue) {
-  stack<char> opStack;
-  deque<string> outputQueue;
+deque<Token> shuntingYard(deque<Token> inputQueue) {
+  stack<Token> opStack;
+  deque<Token> outputQueue;
   unordered_map<char, size_t> opRank;
   opRank['+'] = 1;
   opRank['-'] = 1;
@@ -64,32 +64,30 @@ deque<string> shuntingYard(deque<string> inputQueue) {
   opRank['/'] = 2;
   opRank['('] = 0;
 
-  for (string &token : inputQueue) {
-    if (isNumeric(token)) {
+  for (Token &token : inputQueue) {
+    if (token.type == value) {
       outputQueue.push_back(token);
       continue;
     }
 
-    const char opAsChar = token[0];
-
-    if (opAsChar == ')') {
-      while (opStack.top() != '(') {
-        outputQueue.push_back(string(1, opStack.top())), opStack.pop();
+    if (token.symbol[0] == ')') {
+      while (opStack.top().symbol != "(") {
+        outputQueue.push_back(opStack.top()), opStack.pop();
       }
       opStack.pop();
       continue;
     }
 
-    while (opAsChar != '(' && !opStack.empty() &&
-           opRank.at(opAsChar) < opRank.at(opStack.top())) {
-      outputQueue.push_back(string(1, opStack.top())), opStack.pop();
+    while (token.symbol[0] != '(' && !opStack.empty() &&
+           opRank.at(token.symbol[0]) < opRank.at(opStack.top().symbol[0])) {
+      outputQueue.push_back(opStack.top()), opStack.pop();
     }
 
-    opStack.push(opAsChar);
+    opStack.push(token);
   }
 
   while (!opStack.empty()) {
-    outputQueue.push_back(string(1, opStack.top())), opStack.pop();
+    outputQueue.push_back(opStack.top()), opStack.pop();
   }
 
   return outputQueue;
@@ -221,9 +219,9 @@ int main() {
   // TEST
   const string inputAsString = getString("Enter Expression: ");
   const deque<Token> algNotation = lexer(inputAsString);
-  //   const deque<string> rpnNotation = shuntingYard(algNotation);
+  const deque<Token> rpnNotation = shuntingYard(algNotation);
 
-  for (Token token : algNotation) {
+  for (Token token : rpnNotation) {
     print(token.symbol);
   }
 
