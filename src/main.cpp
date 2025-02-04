@@ -224,13 +224,14 @@ int main() {
 
   // TEST
   const string inputAsString = getString("Enter Expression: ");
+  // should still work even with invalid chars
   const deque<Token> algNotation = lexer(inputAsString);
   const deque<Token> rpnNotation = shuntingYard(algNotation);
+  //   const double result = evalRpnNotation(rpnNotation);
 
   for (Token token : rpnNotation) {
     print(token.symbol);
   }
 
-  //   const double result = evalRpnNotation(rpnNotation);
   //   print(result, "Answer: ");
 }
