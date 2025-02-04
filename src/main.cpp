@@ -9,11 +9,11 @@
 
 using namespace std;
 
-enum tokenType { value, unaryOp, binaryOp };
+enum TokenType { value, unaryOp, binaryOp };
 
 struct Token {
   string symbol;
-  tokenType type;
+  TokenType type;
 };
 
 bool isNumeric(string symbol) {
@@ -41,12 +41,14 @@ deque<Token> lexer(const string &inputAsString) {
         valueTokenBuffer.clear();
       }
 
-      if ((symbol == "-" && tokens.empty()) ||
-          (symbol == "-" &&
-           (tokens.empty() ||
-            (tokens.back().type != value && tokens.back().symbol != ")")))) {
-        tokens.push_back({"NEG", binaryOp});
-      } else if (symbol != " " && (!isNumeric(symbol) || symbol == ")")) {
+      const bool isNegative =
+          (symbol == "-") && (tokens.empty() || (tokens.back().type != value &&
+                                                 tokens.back().symbol != ")"));
+
+      if (isNegative) {
+        tokens.push_back({"NEG", unaryOp});
+        // symbol != " " && (!isNumeric(symbol) || symbol == ")")
+      } else if (symbol != " " && !isNumeric(symbol)) {
         tokens.push_back({symbol, binaryOp});
       }
     }
@@ -62,6 +64,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
   opRank["-"] = 1;
   opRank["*"] = 2;
   opRank["/"] = 2;
+  opRank["NEG"] = 3;
   opRank["("] = 0;
 
   for (Token &token : inputQueue) {
@@ -72,7 +75,8 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
     if (token.symbol == ")") {
       while (opStack.top().symbol != "(") {
-        outputQueue.push_back(opStack.top()), opStack.pop();
+        outputQueue.push_back(opStack.top());
+        opStack.pop();
       }
       opStack.pop();
       continue;
@@ -80,14 +84,16 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
     while (token.symbol != "(" && !opStack.empty() &&
            opRank.at(token.symbol) < opRank.at(opStack.top().symbol)) {
-      outputQueue.push_back(opStack.top()), opStack.pop();
+      outputQueue.push_back(opStack.top());
+      opStack.pop();
     }
 
     opStack.push(token);
   }
 
   while (!opStack.empty()) {
-    outputQueue.push_back(opStack.top()), opStack.pop();
+    outputQueue.push_back(opStack.top());
+    opStack.pop();
   }
 
   return outputQueue;
