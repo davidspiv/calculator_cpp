@@ -16,7 +16,7 @@ struct Token {
   TokenType type;
 };
 
-bool isNumeric(string symbol) {
+bool isNumeric(const string &symbol) {
   if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
     return true;
   }
@@ -149,7 +149,7 @@ bool validAlgNotation(deque<string> algNotation) {
   } else if (!isNumeric(algNotation.back()) && algNotation.back() != ")") {
     errorMessage = "ends with an op";
   } else {
-    for (string token : algNotation) {
+    for (const string &token : algNotation) {
       if (token == "(") {
         ++openParentheses;
       } else if (token == ")") {
@@ -229,7 +229,7 @@ int main() {
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   //   const double result = evalRpnNotation(rpnNotation);
 
-  for (Token token : rpnNotation) {
+  for (const Token &token : rpnNotation) {
     print(token.symbol);
   }
 
