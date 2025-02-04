@@ -57,12 +57,12 @@ deque<Token> lexer(const string &inputAsString) {
 deque<Token> shuntingYard(deque<Token> inputQueue) {
   stack<Token> opStack;
   deque<Token> outputQueue;
-  unordered_map<char, size_t> opRank;
-  opRank['+'] = 1;
-  opRank['-'] = 1;
-  opRank['*'] = 2;
-  opRank['/'] = 2;
-  opRank['('] = 0;
+  unordered_map<string, size_t> opRank;
+  opRank["+"] = 1;
+  opRank["-"] = 1;
+  opRank["*"] = 2;
+  opRank["/"] = 2;
+  opRank["("] = 0;
 
   for (Token &token : inputQueue) {
     if (token.type == value) {
@@ -70,7 +70,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
       continue;
     }
 
-    if (token.symbol[0] == ')') {
+    if (token.symbol == ")") {
       while (opStack.top().symbol != "(") {
         outputQueue.push_back(opStack.top()), opStack.pop();
       }
@@ -78,8 +78,8 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
       continue;
     }
 
-    while (token.symbol[0] != '(' && !opStack.empty() &&
-           opRank.at(token.symbol[0]) < opRank.at(opStack.top().symbol[0])) {
+    while (token.symbol != "(" && !opStack.empty() &&
+           opRank.at(token.symbol) < opRank.at(opStack.top().symbol)) {
       outputQueue.push_back(opStack.top()), opStack.pop();
     }
 
