@@ -9,6 +9,13 @@
 
 using namespace std;
 
+enum tokenType { value, unaryOp, binaryOp };
+
+struct Token {
+  string text;
+  tokenType type;
+};
+
 bool isNumeric(string token) {
   if (!token.empty() && (isdigit(token[0]) || token[0] == '.')) {
     return true;
@@ -16,7 +23,7 @@ bool isNumeric(string token) {
   return token.size() > 1 && (isdigit(token[1]) || token[1] == '.');
 }
 
-// Removes unary negation operator (-) and whitespace
+// Removes unary negation op (-) and whitespace
 deque<string> tokenize(const string &inputAsString) {
   deque<string> tokens;
   string valueTokenBuffer = "";
@@ -48,14 +55,14 @@ deque<string> tokenize(const string &inputAsString) {
 }
 
 deque<string> shuntingYard(deque<string> inputQueue) {
-  stack<char> operatorStack;
+  stack<char> opStack;
   deque<string> outputQueue;
-  unordered_map<char, size_t> operatorRank;
-  operatorRank['+'] = 1;
-  operatorRank['-'] = 1;
-  operatorRank['*'] = 2;
-  operatorRank['/'] = 2;
-  operatorRank['('] = 0;
+  unordered_map<char, size_t> opRank;
+  opRank['+'] = 1;
+  opRank['-'] = 1;
+  opRank['*'] = 2;
+  opRank['/'] = 2;
+  opRank['('] = 0;
 
   for (string &token : inputQueue) {
     if (isNumeric(token)) {
@@ -63,29 +70,26 @@ deque<string> shuntingYard(deque<string> inputQueue) {
       continue;
     }
 
-    const char operatorAsChar = token[0];
+    const char opAsChar = token[0];
 
-    if (operatorAsChar == ')') {
-      while (operatorStack.top() != '(') {
-        outputQueue.push_back(string(1, operatorStack.top())),
-            operatorStack.pop();
+    if (opAsChar == ')') {
+      while (opStack.top() != '(') {
+        outputQueue.push_back(string(1, opStack.top())), opStack.pop();
       }
-      operatorStack.pop();
+      opStack.pop();
       continue;
     }
 
-    while (operatorAsChar != '(' && !operatorStack.empty() &&
-           operatorRank.at(operatorAsChar) <
-               operatorRank.at(operatorStack.top())) {
-      outputQueue.push_back(string(1, operatorStack.top())),
-          operatorStack.pop();
+    while (opAsChar != '(' && !opStack.empty() &&
+           opRank.at(opAsChar) < opRank.at(opStack.top())) {
+      outputQueue.push_back(string(1, opStack.top())), opStack.pop();
     }
 
-    operatorStack.push(operatorAsChar);
+    opStack.push(opAsChar);
   }
 
-  while (!operatorStack.empty()) {
-    outputQueue.push_back(string(1, operatorStack.top())), operatorStack.pop();
+  while (!opStack.empty()) {
+    outputQueue.push_back(string(1, opStack.top())), opStack.pop();
   }
 
   return outputQueue;
@@ -131,15 +135,15 @@ double evalRpnNotation(deque<string> rpnNotation) {
 bool validAlgNotation(deque<string> algNotation) {
   int openParentheses = 0;
   size_t previousNumeric = 0;
-  size_t previousOperator = 0;
+  size_t previousOp = 0;
   string errorMessage;
 
   if (algNotation.empty()) {
     errorMessage = "empty input";
   } else if (!isNumeric(algNotation.front()) && algNotation.front() != "(") {
-    errorMessage = "starts with an operator";
+    errorMessage = "starts with an op";
   } else if (!isNumeric(algNotation.back()) && algNotation.back() != ")") {
-    errorMessage = "ends with an operator";
+    errorMessage = "ends with an op";
   } else {
     for (string token : algNotation) {
       if (token == "(") {
@@ -163,13 +167,13 @@ bool validAlgNotation(deque<string> algNotation) {
           break;
         }
         ++previousNumeric;
-        if (previousOperator) {
-          --previousOperator;
+        if (previousOp) {
+          --previousOp;
         }
       } else {
-        ++previousOperator;
+        ++previousOp;
         if (!previousNumeric) {
-          errorMessage = "consecutive operators";
+          errorMessage = "consecutive ops";
           break;
         }
         --previousNumeric;
@@ -192,25 +196,37 @@ bool validAlgNotation(deque<string> algNotation) {
   }
 
   if (errorMessage.length()) {
-    print("Invalid: ", errorMessage);
+    print(errorMessage, "Invalid: ");
     return false;
   }
   return true;
 }
 
 int main() {
-  deque<string> algNotation;
-  do {
-    const string inputAsString = getString("Enter Expression: ");
-    algNotation = tokenize(inputAsString);
-  } while (!validAlgNotation(algNotation));
+  //   deque<string> algNotation;
+  //   do {
+  //     const string inputAsString = getString("Enter Expression: ");
+  //     algNotation = tokenize(inputAsString);
+  //   } while (!validAlgNotation(algNotation));
 
-  const deque<string> rpnNotation = shuntingYard(algNotation);
+  //   const deque<string> rpnNotation = shuntingYard(algNotation);
 
-  try {
-    const double result = evalRpnNotation(rpnNotation);
-    print("Answer: ", result);
-  } catch (const exception &err) {
-    cerr << err.what() << endl;
+  //   try {
+  //     const double result = evalRpnNotation(rpnNotation);
+  //     print(result, "Answer: ");
+  //   } catch (const exception &err) {
+  //     cerr << err.what() << endl;
+  //   }
+
+  // TEST
+  const string inputAsString = getString("Enter Expression: ");
+  const deque<string> algNotation = tokenize(inputAsString);
+
+  for (string token : algNotation) {
+    print(token);
   }
+  //   const deque<string> rpnNotation = shuntingYard(algNotation);
+
+  //   const double result = evalRpnNotation(rpnNotation);
+  //   print(result, "Answer: ");
 }

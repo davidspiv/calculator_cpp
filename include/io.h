@@ -8,7 +8,11 @@
 std::string getString(const std::string &prompt);
 
 template <typename T>
-void print(const std::string &label, T output) {
+void print(T output, const std::string &label = "") {
+  if (label.empty()) {
+    std::cout << output << std::endl;
+    return;
+  }
   std::cout << std::setw(18) << label << output << std::endl;
 }
 
