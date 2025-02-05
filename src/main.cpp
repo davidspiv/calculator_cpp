@@ -136,7 +136,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
   return result.top();
 }
 
-bool validAlgNotation(deque<string> algNotation) {
+bool validAlgNotation(const deque<Token> &algNotation) {
   int openParentheses = 0;
   size_t previousNumeric = 0;
   size_t previousOp = 0;
@@ -144,24 +144,27 @@ bool validAlgNotation(deque<string> algNotation) {
 
   if (algNotation.empty()) {
     errorMessage = "empty input";
-  } else if (!isNumeric(algNotation.front()) && algNotation.front() != "(") {
+  } else if (algNotation.front().type == binaryOp &&
+             algNotation.front().symbol != "(") {
     errorMessage = "starts with an op";
-  } else if (!isNumeric(algNotation.back()) && algNotation.back() != ")") {
+  } else if (algNotation.back().type == binaryOp &&
+             algNotation.back().symbol != ")") {
     errorMessage = "ends with an op";
   } else {
-    for (const string &token : algNotation) {
-      if (token == "(") {
+    for (const Token &token : algNotation) {
+      print(token.symbol);
+      if (token.symbol == "(") {
         ++openParentheses;
-      } else if (token == ")") {
+      } else if (token.symbol == ")") {
         --openParentheses;
-      } else if (isNumeric(token)) {
+      } else if (token.type != value) {
         size_t decimalCount = 0;
-        for (char ch : token) {
+        for (char ch : token.symbol) {
           if (ch == '.') {
             ++decimalCount;
           }
         }
-        if (token.length() == 1 && decimalCount) {
+        if (token.symbol.length() == 1 && decimalCount) {
           errorMessage = "isolated decimal";
           break;
         }
@@ -170,8 +173,9 @@ bool validAlgNotation(deque<string> algNotation) {
           errorMessage = "multiple decimals";
           break;
         }
-        ++previousNumeric;
+
         if (previousOp) {
+          ++previousNumeric;
           --previousOp;
         }
       } else {
@@ -229,7 +233,7 @@ int main() {
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   const double result = evalRpnNotation(rpnNotation);
 
-  // for (const Token &token : rpnNotation) {
+  // for (const Token &token : algNotation) {
   //   print(token.symbol);
   // }
 
