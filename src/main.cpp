@@ -119,19 +119,13 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
       result.pop();
 
       if (token.symbol == "NEG") {
-        result.push(operandB * -1.0);
+        result.push(operandB * -1);
         continue;
       }
 
-      if (token.symbol == "SIN") {
+      if (token.symbol == "SIN" || token.symbol == "COS") {
         const double normalizedRadians = normalizeRadians(operandB);
-        result.push(taylorSeries("SIN", normalizedRadians));
-        continue;
-      }
-
-      if (token.symbol == "COS") {
-        const double normalizedRadians = normalizeRadians(operandB);
-        result.push(taylorSeries("COS", normalizedRadians));
+        result.push(taylorSeries(token.symbol, normalizedRadians));
         continue;
       }
 
@@ -145,7 +139,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
       } else if (token.symbol == "*") {
         result.push(operandA * operandB);
       } else if (token.symbol == "/") {
-        if (!operandB && operandA) {
+        if (!operandB) {
           throw invalid_argument("ERROR: unable to divide by zero");
         }
         result.push(operandA / operandB);
@@ -159,13 +153,17 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
 int main() {
   //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString = "cos(5) - sin(-11 + 3) * -22";
+  const string inputAsString =
+      "((sin(3.5) + cos(-2.1)) * ((7.2 / (-3.6)) + (4.4 - sin(1.2)))) - ((5.4 "
+      "/ (2.7 - cos(1.3))) * -2.5)";
   const deque<Token> algNotation = lexer(inputAsString);
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   const double result = evalRpnNotation(rpnNotation);
   print(result, "Answer: ");
 
   // TEST
-  const double test = cos(5) - sin(-11 + 3) * -22;
+  const double test =
+      ((sin(3.5) + cos(-2.1)) * ((7.2 / (-3.6)) + (4.4 - sin(1.2)))) -
+      ((5.4 / (2.7 - cos(1.3))) * -2.5);
   print(test, "  Test: ");
 }
