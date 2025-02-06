@@ -1,6 +1,7 @@
 #define M_PI 3.14159265358979323846
 
 #include <iostream>
+#include <string>
 
 int floor(double input) { return static_cast<int>(input); }
 
@@ -16,7 +17,7 @@ void createFactorialCache(double *factorialCache, size_t iterations) {
   }
 }
 
-double taylorSeriesSine(double radians) {
+double taylorSeries(const std::string &type, double radians) {
   const size_t terms = 50;
   double result = 0;
   bool isPositive = terms % 4 && terms % 4 != 3;
@@ -25,17 +26,23 @@ double taylorSeriesSine(double radians) {
   createFactorialCache(&factorialCache[0], terms);
 
   // Horner's method
-  for (int i = terms; i > 0; i -= 1) {
-    const double coefficient = (1 / factorialCache[i]);
+  for (int i = terms; i > 0; i--) {
+    if (type == "SIN" && i % 2) {
+      const double coefficient = (1 / factorialCache[i]);
+      result += isPositive ? coefficient : -coefficient;
+      isPositive = !isPositive;
 
-    if (i % 2) {
+    } else if (type == "COS" && !(i % 2)) {
+      const double coefficient = (1 / factorialCache[i]);
       result += isPositive ? coefficient : -coefficient;
       isPositive = !isPositive;
     }
 
     result *= radians;
   }
-
+  if (type == "COS") {
+    result = 1 - result;
+  }
   return result;
 }
 

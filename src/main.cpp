@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "../include/io.h"
-#include "../include/taylorSeriesSine.h"
+#include "../include/taylorSeries.h"
 
 using namespace std;
 
@@ -47,13 +47,13 @@ deque<Token> lexer(const string &inputAsString) {
           (symbol == "-") && (tokens.empty() || (tokens.back().type != value &&
                                                  tokens.back().symbol != ")"));
 
-      const bool isSine = symbol == "s";
-
       if (isNegative) {
         tokens.push_back({"NEG", unaryOp});
-        // symbol != " " && (!isNumeric(symbol) || symbol == ")")
-      } else if (isSine) {
+      } else if (symbol == "s") {
         tokens.push_back({"SIN", unaryOp});
+        i += 2;
+      } else if (symbol == "c") {
+        tokens.push_back({"COS", unaryOp});
         i += 2;
       } else if (symbol != " " && !isNumeric(symbol)) {
         tokens.push_back({symbol, binaryOp});
@@ -72,6 +72,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
   opRank["*"] = 2;
   opRank["/"] = 2;
   opRank["SIN"] = 3;
+  opRank["COS"] = 3;
   opRank["NEG"] = 4;
   opRank["("] = 0;
 
@@ -124,7 +125,13 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
       if (token.symbol == "SIN") {
         const double normalizedRadians = normalizeRadians(operandB);
-        result.push(taylorSeriesSine(normalizedRadians));
+        result.push(taylorSeries("SIN", normalizedRadians));
+        continue;
+      }
+
+      if (token.symbol == "COS") {
+        const double normalizedRadians = normalizeRadians(operandB);
+        result.push(taylorSeries("COS", normalizedRadians));
         continue;
       }
 
@@ -143,7 +150,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
         }
         result.push(operandA / operandB);
       } else {
-        throw invalid_argument("ERROR: unrecognized non-numeric");
+        throw invalid_argument("ERROR: unrecognized symbol");
       }
     }
   }
@@ -152,17 +159,13 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
 int main() {
   //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString =
-      "((3.5 + sin(-2.1)) * sin((7.2 / (-3.6)) + (4.4 - 1.2))) - ((5.4 / (2.7 "
-      "- "
-      "1.3)) * -2.5)";
+  const string inputAsString = "cos(5) - sin(-11 + 3) * -22";
   const deque<Token> algNotation = lexer(inputAsString);
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   const double result = evalRpnNotation(rpnNotation);
   print(result, "Answer: ");
 
   // TEST
-  const double test = ((3.5 + sin(-2.1)) * sin((7.2 / (-3.6)) + (4.4 - 1.2))) -
-                      ((5.4 / (2.7 - 1.3)) * -2.5);
+  const double test = cos(5) - sin(-11 + 3) * -22;
   print(test, "  Test: ");
 }
