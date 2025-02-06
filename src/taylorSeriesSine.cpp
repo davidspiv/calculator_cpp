@@ -1,24 +1,6 @@
 #define M_PI 3.14159265358979323846
 
-#include <iomanip>
 #include <iostream>
-
-template <typename T>
-T getInput(const std::string &prompt) {
-  const int expectedMaxInputLength = 100;
-  T input;
-  std::cout << prompt;
-  std::cin >> input;
-
-  while (!std::cin || std::cin.peek() != '\n') {
-    std::cin.clear();
-    std::cin.ignore(expectedMaxInputLength, '\n');
-    std::cout << "Error: invalid input, try again" << std::endl << prompt;
-    std::cin >> input;
-  }
-
-  return input;
-}
 
 int floor(double input) { return static_cast<int>(input); }
 
@@ -57,11 +39,11 @@ double taylorSeriesSine(double radians) {
   return result;
 }
 
-int main() {
-  const double radians = normalizeRadians(getInput<double>("Enter Radians: "));
-  const double answer = taylorSeriesSine(radians);
-  std::cout << std::setw(15) << "Result: " << std::setprecision(15) << answer
-            << std::endl;
+// int main() {
+//   const double radians = normalizeRadians(getInput<double>("Enter Radians:
+//   ")); const double answer = taylorSeriesSine(radians); std::cout <<
+//   std::setw(15) << "Result: " << std::setprecision(15) << answer
+//             << std::endl;
 
-  return 0;
-}
+//   return 0;
+// }

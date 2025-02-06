@@ -1,3 +1,4 @@
+#include <cmath>
 #include <deque>
 #include <iostream>
 #include <stack>
@@ -6,6 +7,7 @@
 #include <unordered_map>
 
 #include "../include/io.h"
+#include "../include/taylorSeriesSine.h"
 
 using namespace std;
 
@@ -45,9 +47,14 @@ deque<Token> lexer(const string &inputAsString) {
           (symbol == "-") && (tokens.empty() || (tokens.back().type != value &&
                                                  tokens.back().symbol != ")"));
 
+      const bool isSine = symbol == "s";
+
       if (isNegative) {
         tokens.push_back({"NEG", unaryOp});
         // symbol != " " && (!isNumeric(symbol) || symbol == ")")
+      } else if (isSine) {
+        tokens.push_back({"SIN", unaryOp});
+        i += 2;
       } else if (symbol != " " && !isNumeric(symbol)) {
         tokens.push_back({symbol, binaryOp});
       }
@@ -64,7 +71,8 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
   opRank["-"] = 1;
   opRank["*"] = 2;
   opRank["/"] = 2;
-  opRank["NEG"] = 3;
+  opRank["SIN"] = 3;
+  opRank["NEG"] = 4;
   opRank["("] = 0;
 
   for (Token &token : inputQueue) {
@@ -114,6 +122,12 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
         continue;
       }
 
+      if (token.symbol == "SIN") {
+        const double normalizedRadians = normalizeRadians(operandB);
+        result.push(taylorSeriesSine(normalizedRadians));
+        continue;
+      }
+
       const double operandA = result.top();
       result.pop();
 
@@ -136,106 +150,19 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
   return result.top();
 }
 
-bool validAlgNotation(const deque<Token> &algNotation) {
-  int openParentheses = 0;
-  size_t previousNumeric = 0;
-  size_t previousOp = 0;
-  string errorMessage;
-
-  if (algNotation.empty()) {
-    errorMessage = "empty input";
-  } else if (algNotation.front().type == binaryOp &&
-             algNotation.front().symbol != "(") {
-    errorMessage = "starts with an op";
-  } else if (algNotation.back().type == binaryOp &&
-             algNotation.back().symbol != ")") {
-    errorMessage = "ends with an op";
-  } else {
-    for (const Token &token : algNotation) {
-      print(token.symbol);
-      if (token.symbol == "(") {
-        ++openParentheses;
-      } else if (token.symbol == ")") {
-        --openParentheses;
-      } else if (token.type != value) {
-        size_t decimalCount = 0;
-        for (char ch : token.symbol) {
-          if (ch == '.') {
-            ++decimalCount;
-          }
-        }
-        if (token.symbol.length() == 1 && decimalCount) {
-          errorMessage = "isolated decimal";
-          break;
-        }
-
-        if (decimalCount > 1) {
-          errorMessage = "multiple decimals";
-          break;
-        }
-
-        if (previousOp) {
-          ++previousNumeric;
-          --previousOp;
-        }
-      } else {
-        ++previousOp;
-        if (!previousNumeric) {
-          errorMessage = "consecutive ops";
-          break;
-        }
-        --previousNumeric;
-      }
-
-      if (openParentheses < 0) {
-        errorMessage = "missing open parenthesis";
-        break;
-      }
-
-      if (previousNumeric > 1) {
-        errorMessage = "consecutive numeric values";
-        break;
-      }
-    }
-  }
-
-  if (!errorMessage.length() && openParentheses) {
-    errorMessage = "missing closing parenthesis";
-  }
-
-  if (errorMessage.length()) {
-    print(errorMessage, "Invalid: ");
-    return false;
-  }
-  return true;
-}
-
 int main() {
-  //   deque<string> algNotation;
-  //   do {
-  //     const string inputAsString = getString("Enter Expression: ");
-  //     algNotation = lexer(inputAsString);
-  //   } while (!validAlgNotation(algNotation));
-
-  //   const deque<string> rpnNotation = shuntingYard(algNotation);
-
-  //   try {
-  //     const double result = evalRpnNotation(rpnNotation);
-  //     print(result, "Answer: ");
-  //   } catch (const exception &err) {
-  //     cerr << err.what() << endl;
-  //   }
-
-  // TEST
-  const string inputAsString = getString("Enter Expression: ");
-  // should still work even with invalid chars
+  //   const string inputAsString = getString("Enter Expression: ");
+  const string inputAsString =
+      "((3.5 + sin(-2.1)) * sin((7.2 / (-3.6)) + (4.4 - 1.2))) - ((5.4 / (2.7 "
+      "- "
+      "1.3)) * -2.5)";
   const deque<Token> algNotation = lexer(inputAsString);
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   const double result = evalRpnNotation(rpnNotation);
-
-  // for (const Token &token : algNotation) {
-  //   print(token.symbol);
-  // }
-
   print(result, "Answer: ");
+
+  // TEST
+  const double test = ((3.5 + sin(-2.1)) * sin((7.2 / (-3.6)) + (4.4 - 1.2))) -
+                      ((5.4 / (2.7 - 1.3)) * -2.5);
+  print(test, "  Test: ");
 }
