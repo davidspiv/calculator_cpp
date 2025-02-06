@@ -17,27 +17,29 @@ void createFactorialCache(double *factorialCache, size_t iterations) {
   }
 }
 
+double createCoeff(double denominator, bool &isPositive) {
+  double coeff = (1 / denominator);
+  coeff = isPositive ? coeff : -coeff;
+  isPositive = !isPositive;
+  return coeff;
+}
+
 double taylorSeries(const std::string &type, double radians) {
-  const size_t terms = 50;
   double result = 0;
-  bool isPositive = terms % 4 && terms % 4 != 3;
+  const size_t terms = 50;
   double factorialCache[terms + 1];
+  bool isPositive = terms % 4 && terms % 4 != 3;
 
   createFactorialCache(&factorialCache[0], terms);
 
   // Horner's method
   for (int i = terms; i > 0; i--) {
     if (type == "SIN" && i % 2) {
-      const double coefficient = (1 / factorialCache[i]);
-      result += isPositive ? coefficient : -coefficient;
-      isPositive = !isPositive;
-
-    } else if (type == "COS" && !(i % 2)) {
-      const double coefficient = (1 / factorialCache[i]);
-      result += isPositive ? coefficient : -coefficient;
-      isPositive = !isPositive;
+      result += createCoeff(factorialCache[i], isPositive);
     }
-
+    if (type == "COS" && !(i % 2)) {
+      result += createCoeff(factorialCache[i], isPositive);
+    }
     result *= radians;
   }
   if (type == "COS") {
@@ -45,12 +47,3 @@ double taylorSeries(const std::string &type, double radians) {
   }
   return result;
 }
-
-// int main() {
-//   const double radians = normalizeRadians(getInput<double>("Enter Radians:
-//   ")); const double answer = taylorSeriesSine(radians); std::cout <<
-//   std::setw(15) << "Result: " << std::setprecision(15) << answer
-//             << std::endl;
-
-//   return 0;
-// }
