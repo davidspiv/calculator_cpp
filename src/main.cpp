@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "../include/io.h"
-#include "../include/taylorSeries.h"
+#include "../include/math.h"
 
 using namespace std;
 
@@ -26,31 +26,31 @@ bool isNumeric(const string &symbol) {
   if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
     return true;
   }
-  return symbol.size() > 1 && (isdigit(symbol[1]) || symbol[1] == '.');
+  return !symbol.empty() && (isdigit(symbol[1]) || symbol[1] == '.');
 }
 
 // Determine if '-' represent negation or subtraction
-bool isNegativeSymbol(const deque<Token> &tokens) {
+bool isNegateOp(const deque<Token> &tokens) {
   return tokens.empty() ||
          (tokens.back().type != value && tokens.back().symbol != ")");
 }
 
 deque<Token> lexer(const string &inputAsString) {
   deque<Token> tokens;
-  string valueTokenBuffer = "";
+  string symbolBuffer = "";
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
     const string symbol(1, inputAsString[i]);
 
     if (isNumeric(symbol)) {
-      valueTokenBuffer += inputAsString[i];
+      symbolBuffer += inputAsString[i];
     }
 
     if (!isNumeric(symbol)) {
       // process numeric buffer first
-      if (!valueTokenBuffer.empty()) {
-        tokens.push_back({valueTokenBuffer, value});
-        valueTokenBuffer.clear();
+      if (!symbolBuffer.empty()) {
+        tokens.push_back({symbolBuffer, value});
+        symbolBuffer.clear();
       }
 
       // process operators and parenthesis
@@ -65,7 +65,7 @@ deque<Token> lexer(const string &inputAsString) {
       } else if (symbol == "(" || symbol == ")") {
         tokens.push_back({symbol, parenthesis});
 
-      } else if (symbol == "-" && isNegativeSymbol(tokens)) {
+      } else if (symbol == "-" && isNegateOp(tokens)) {
         tokens.push_back({"NEG", unaryOp});
 
       } else if (symbol == "-") {
@@ -81,8 +81,8 @@ deque<Token> lexer(const string &inputAsString) {
   }
 
   // flush remaining numeric values
-  if (!valueTokenBuffer.empty()) {
-    tokens.push_back({valueTokenBuffer, value});
+  if (!symbolBuffer.empty()) {
+    tokens.push_back({symbolBuffer, value});
   }
   return tokens;
 }
@@ -110,7 +110,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
         outputQueue.push_back(opStack.top());
         opStack.pop();
       }
-      opStack.pop();
+      opStack.pop();  // remove open parenthesis
       continue;
     }
 
@@ -144,66 +144,76 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
   stack<double> result;
 
   for (const Token &token : rpnNotation) {
+    // handle numerics
     if (token.type == value) {
       result.push(stod(token.symbol));
-    } else {
-      const double operandB = result.top();
-      result.pop();
+      continue;
+    }
 
-      if (token.symbol == "NEG") {
-        result.push(operandB * -1);
-        continue;
+    // handle unary operators
+    if (result.empty()) {
+      throw invalid_argument("ERROR: invalid expression involving operator \"" +
+                             token.symbol + " \"");
+    }
+    const double operandB = result.top();
+    result.pop();
+
+    if (token.symbol == "NEG") {
+      result.push(operandB * -1);
+      continue;
+    }
+
+    if (token.symbol == "SIN") {
+      result.push(_sin(operandB));
+      continue;
+    } else if (token.symbol == "COS") {
+      result.push(_cos(operandB));
+      continue;
+    }
+
+    // handle binary operators
+    if (result.empty()) {
+      throw invalid_argument("ERROR: invalid expression involving operator \"" +
+                             token.symbol + "\"");
+    }
+    const double operandA = result.top();
+    result.pop();
+
+    if (token.symbol == "^") {
+      result.push(pow(operandA, operandB));
+
+    } else if (token.symbol == "+") {
+      result.push(operandA + operandB);
+
+    } else if (token.symbol == "-") {
+      result.push(operandA - operandB);
+
+    } else if (token.symbol == "*") {
+      result.push(operandA * operandB);
+
+    } else if (token.symbol == "/") {
+      if (!operandB) {
+        throw invalid_argument("ERROR: unable to divide by zero");
       }
-
-      if (token.symbol == "SIN" || token.symbol == "COS") {
-        const double normalizedRadians = normalizeRadians(operandB);
-        result.push(taylorSeries(token.symbol, normalizedRadians));
-        continue;
-      }
-
-      const double operandA = result.top();
-      result.pop();
-
-      if (token.symbol == "^") {
-        double eval = operandA;
-        for (size_t i = 1; i < abs(operandB); i++) {
-          eval *= operandA;
-        }
-        if (operandB < 0) {
-          result.push(1 / eval);
-        } else {
-          result.push(eval);
-        }
-      } else if (token.symbol == "+") {
-        result.push(operandA + operandB);
-      } else if (token.symbol == "-") {
-        result.push(operandA - operandB);
-      } else if (token.symbol == "*") {
-        result.push(operandA * operandB);
-      } else if (token.symbol == "/") {
-        if (!operandB) {
-          throw invalid_argument("ERROR: unable to divide by zero");
-        }
-        result.push(operandA / operandB);
-      }
+      result.push(operandA / operandB);
     }
   }
   return result.top();
 }
 
 int main() {
-  //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString =
-      "sin(cos((1.2 + (3.4 - 2.5 / 1.1)) / 2.3)) * ((-4.5 + 2.7) / 1.8)^ 3";
-  const deque<Token> algNotation = lexer(inputAsString);
-
-  const deque<Token> rpnNotation = shuntingYard(algNotation);
-  const double result = evalRpnNotation(rpnNotation);
-  print(result, "Answer: ");
-
-  // TEST
-  const double test =
-      sin(cos((1.2 + (3.4 - 2.5 / 1.1)) / 2.3)) * pow((-4.5 + 2.7) / 1.8, 3);
-  ;
-  print(test, "  Test: ");
+  print("Enter Expression. Type 'exit' to quit.");
+  while (true) {
+    const string inputAsString = getString(">> ");
+    if (inputAsString == "exit") break;
+    try {
+      const deque<Token> algNotation = lexer(inputAsString);
+      const deque<Token> rpnNotation = shuntingYard(algNotation);
+      const double result = evalRpnNotation(rpnNotation);
+      print(result);
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << '\n';
+    }
+  }
+  print("Successfully exited");
 }

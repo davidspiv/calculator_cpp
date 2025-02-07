@@ -1,14 +1,7 @@
-#define M_PI 3.14159265358979323846
-
 #include <iostream>
 #include <string>
 
-int floor(double input) { return static_cast<int>(input); }
-
-double normalizeRadians(double x) {
-  const double max = 2 * M_PI;
-  return x - floor(x / max) * max;
-}
+#include "math.h"
 
 void createFactorialCache(double *factorialCache, size_t iterations) {
   factorialCache[0] = 1;
@@ -25,8 +18,8 @@ double createCoeff(double denominator, bool &isPositive) {
 }
 
 double taylorSeries(const std::string &type, double radians) {
-  double result = 0;
   const size_t terms = 50;
+  double result = 0;
   double factorialCache[terms + 1];
   bool isPositive = terms % 4 && terms % 4 != 3;
 

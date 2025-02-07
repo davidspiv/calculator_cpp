@@ -1,5 +1,5 @@
-#ifndef TAYLORSERIESSINE_H
-#define TAYLORSERIESSINE_H
+#ifndef TAYLORSERIES_H
+#define TAYLORSERIES_H
 
 #include <string>
 
