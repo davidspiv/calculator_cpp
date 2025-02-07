@@ -11,12 +11,16 @@
 
 using namespace std;
 
-enum TokenType { value, unaryOp, binaryOp };
+enum TokenType { value, unaryOp, binaryOp, parenthesis };
 
 struct Token {
   string symbol;
   TokenType type;
 };
+
+unordered_map<string, size_t> opRank = {{"(", 0},   {"+", 1},   {"-", 1},
+                                        {"*", 2},   {"/", 2},   {"^", 3},
+                                        {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
 
 bool isNumeric(const string &symbol) {
   if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
@@ -25,50 +29,74 @@ bool isNumeric(const string &symbol) {
   return symbol.size() > 1 && (isdigit(symbol[1]) || symbol[1] == '.');
 }
 
+// Determine if '-' represent negation or subtraction
+bool isNegativeSymbol(const deque<Token> &tokens) {
+  return tokens.empty() ||
+         (tokens.back().type != value && tokens.back().symbol != ")");
+}
+
 deque<Token> lexer(const string &inputAsString) {
   deque<Token> tokens;
   string valueTokenBuffer = "";
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
     const string symbol(1, inputAsString[i]);
-    const size_t lastIndex = inputAsString.length() - 1;
 
     if (isNumeric(symbol)) {
       valueTokenBuffer += inputAsString[i];
     }
 
-    if (!isNumeric(symbol) || i == lastIndex) {
+    if (!isNumeric(symbol)) {
+      // process numeric buffer first
       if (!valueTokenBuffer.empty()) {
         tokens.push_back({valueTokenBuffer, value});
         valueTokenBuffer.clear();
       }
 
-      const bool isNegative =
-          (symbol == "-") && (tokens.empty() || (tokens.back().type != value &&
-                                                 tokens.back().symbol != ")"));
-
-      if (isNegative) {
-        tokens.push_back({"NEG", unaryOp});
-      } else if (symbol == "s") {
+      // process operators and parenthesis
+      if (symbol == "s") {
         tokens.push_back({"SIN", unaryOp});
         i += 2;
+
       } else if (symbol == "c") {
         tokens.push_back({"COS", unaryOp});
         i += 2;
-      } else if (symbol != " " && !isNumeric(symbol)) {
+
+      } else if (symbol == "(" || symbol == ")") {
+        tokens.push_back({symbol, parenthesis});
+
+      } else if (symbol == "-" && isNegativeSymbol(tokens)) {
+        tokens.push_back({"NEG", unaryOp});
+
+      } else if (symbol == "-") {
         tokens.push_back({symbol, binaryOp});
+
+      } else if (opRank.find(symbol) != opRank.end()) {
+        tokens.push_back({symbol, binaryOp});
+
+      } else if (symbol != " ") {
+        throw invalid_argument("ERROR: unrecognized symbol \"" + symbol + "\"");
       }
     }
   }
+
+  // flush remaining numeric values
+  if (!valueTokenBuffer.empty()) {
+    tokens.push_back({valueTokenBuffer, value});
+  }
   return tokens;
+}
+
+size_t getPreviousOpRank(const stack<Token> &opStack) {
+  if (!opStack.empty()) {
+    return opRank.at(opStack.top().symbol);
+  }
+  return 0;
 }
 
 deque<Token> shuntingYard(deque<Token> inputQueue) {
   stack<Token> opStack;
   deque<Token> outputQueue;
-  unordered_map<string, size_t> opRank = {{"(", 0},   {"+", 1},   {"-", 1},
-                                          {"*", 2},   {"/", 2},   {"^", 3},
-                                          {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
 
   for (Token &token : inputQueue) {
     if (token.type == value) {
@@ -76,6 +104,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
       continue;
     }
 
+    // flush opStack until matching parenthesis is reached
     if (token.symbol == ")") {
       while (opStack.top().symbol != "(") {
         outputQueue.push_back(opStack.top());
@@ -85,19 +114,24 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
       continue;
     }
 
-    while (token.symbol != "(" && !opStack.empty() &&
-           opRank.at(token.symbol) <= opRank.at(opStack.top().symbol)) {
-      if (token.symbol == "^" &&
-          opRank.at(token.symbol) == opRank.at(opStack.top().symbol)) {
+    const size_t currentOpRank = opRank.at(token.symbol);
+    size_t previousOpRank = getPreviousOpRank(opStack);
+
+    while (token.symbol != "(" && currentOpRank <= previousOpRank) {
+      // nested exponents are unique - must be evaluated right to left
+      if (token.symbol == "^" && currentOpRank == previousOpRank) {
         break;
       }
+
       outputQueue.push_back(opStack.top());
       opStack.pop();
+      previousOpRank = getPreviousOpRank(opStack);
     }
 
     opStack.push(token);
   }
 
+  // flush remaining operators
   while (!opStack.empty()) {
     outputQueue.push_back(opStack.top());
     opStack.pop();
@@ -151,8 +185,6 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
           throw invalid_argument("ERROR: unable to divide by zero");
         }
         result.push(operandA / operandB);
-      } else {
-        throw invalid_argument("ERROR: unrecognized symbol");
       }
     }
   }
@@ -161,7 +193,8 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
 int main() {
   //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString = "3 - 2 - 5^2^3";
+  const string inputAsString =
+      "sin(cos((1.2 + (3.4 - 2.5 / 1.1)) / 2.3)) * ((-4.5 + 2.7) / 1.8)^ 3";
   const deque<Token> algNotation = lexer(inputAsString);
 
   const deque<Token> rpnNotation = shuntingYard(algNotation);
@@ -169,6 +202,8 @@ int main() {
   print(result, "Answer: ");
 
   // TEST
-  const double test = 3 - 2 - pow(5, pow(2, 3));
+  const double test =
+      sin(cos((1.2 + (3.4 - 2.5 / 1.1)) / 2.3)) * pow((-4.5 + 2.7) / 1.8, 3);
+  ;
   print(test, "  Test: ");
 }
