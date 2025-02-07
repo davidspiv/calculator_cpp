@@ -66,15 +66,9 @@ deque<Token> lexer(const string &inputAsString) {
 deque<Token> shuntingYard(deque<Token> inputQueue) {
   stack<Token> opStack;
   deque<Token> outputQueue;
-  unordered_map<string, size_t> opRank;
-  opRank["+"] = 1;
-  opRank["-"] = 1;
-  opRank["*"] = 2;
-  opRank["/"] = 2;
-  opRank["SIN"] = 3;
-  opRank["COS"] = 3;
-  opRank["NEG"] = 4;
-  opRank["("] = 0;
+  unordered_map<string, size_t> opRank = {{"(", 0},   {"+", 1},   {"-", 1},
+                                          {"*", 2},   {"/", 2},   {"^", 3},
+                                          {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
 
   for (Token &token : inputQueue) {
     if (token.type == value) {
@@ -92,7 +86,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
     }
 
     while (token.symbol != "(" && !opStack.empty() &&
-           opRank.at(token.symbol) < opRank.at(opStack.top().symbol)) {
+           opRank.at(token.symbol) <= opRank.at(opStack.top().symbol)) {
       outputQueue.push_back(opStack.top());
       opStack.pop();
     }
@@ -132,7 +126,17 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
       const double operandA = result.top();
       result.pop();
 
-      if (token.symbol == "+") {
+      if (token.symbol == "^") {
+        double eval = operandA;
+        for (size_t i = 1; i < abs(operandB); i++) {
+          eval *= operandA;
+        }
+        if (operandB < 0) {
+          result.push(1 / eval);
+        } else {
+          result.push(eval);
+        }
+      } else if (token.symbol == "+") {
         result.push(operandA + operandB);
       } else if (token.symbol == "-") {
         result.push(operandA - operandB);
@@ -153,17 +157,14 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
 int main() {
   //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString =
-      "((sin(3.5) + cos(-2.1)) * ((7.2 / (-3.6)) + (4.4 - sin(1.2)))) - ((5.4 "
-      "/ (2.7 - cos(1.3))) * -2.5)";
+  const string inputAsString = "-sin(4^2 / -(3 - -3^2) / -cos(.2))";
   const deque<Token> algNotation = lexer(inputAsString);
+
   const deque<Token> rpnNotation = shuntingYard(algNotation);
   const double result = evalRpnNotation(rpnNotation);
   print(result, "Answer: ");
 
   // TEST
-  const double test =
-      ((sin(3.5) + cos(-2.1)) * ((7.2 / (-3.6)) + (4.4 - sin(1.2)))) -
-      ((5.4 / (2.7 - cos(1.3))) * -2.5);
+  const double test = -sin(pow(4, 2) / -(3 - pow(-3, 2)) / -cos(.2));
   print(test, "  Test: ");
 }
