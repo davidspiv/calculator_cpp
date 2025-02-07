@@ -87,6 +87,10 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
     while (token.symbol != "(" && !opStack.empty() &&
            opRank.at(token.symbol) <= opRank.at(opStack.top().symbol)) {
+      if (token.symbol == "^" &&
+          opRank.at(token.symbol) == opRank.at(opStack.top().symbol)) {
+        break;
+      }
       outputQueue.push_back(opStack.top());
       opStack.pop();
     }
@@ -157,7 +161,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
 int main() {
   //   const string inputAsString = getString("Enter Expression: ");
-  const string inputAsString = "-sin(4^2 / -(3 - -3^2) / -cos(.2))";
+  const string inputAsString = "3 - 2 - 5^2^3";
   const deque<Token> algNotation = lexer(inputAsString);
 
   const deque<Token> rpnNotation = shuntingYard(algNotation);
@@ -165,6 +169,6 @@ int main() {
   print(result, "Answer: ");
 
   // TEST
-  const double test = -sin(pow(4, 2) / -(3 - pow(-3, 2)) / -cos(.2));
+  const double test = 3 - 2 - pow(5, pow(2, 3));
   print(test, "  Test: ");
 }
