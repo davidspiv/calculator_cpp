@@ -8,20 +8,18 @@
 #include "../include/_math.h"
 #include "../include/io.h"
 
-using namespace std;
-
 enum TokenType { value, unaryOp, binaryOp, parenthesis };
 
 struct Token {
-  string symbol;
+  std::string symbol;
   TokenType type;
 };
 
-unordered_map<string, size_t> opRank = {{"(", 0},   {"+", 1},   {"-", 1},
-                                        {"*", 2},   {"/", 2},   {"^", 3},
-                                        {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
+std::unordered_map<std::string, size_t> opRank = {
+    {"(", 0}, {"+", 1},   {"-", 1},   {"*", 2},  {"/", 2},
+    {"^", 3}, {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
 
-bool isNumeric(const string &symbol) {
+bool isNumeric(const std::string &symbol) {
   if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
     return true;
   }
@@ -29,17 +27,17 @@ bool isNumeric(const string &symbol) {
 }
 
 // Determine if '-' represent negation or subtraction
-bool isNegateOp(const deque<Token> &tokens) {
+bool isNegateOp(const std::deque<Token> &tokens) {
   return tokens.empty() ||
          (tokens.back().type != value && tokens.back().symbol != ")");
 }
 
-deque<Token> lexer(const string &inputAsString) {
-  deque<Token> tokens;
-  string symbolBuffer = "";
+std::deque<Token> lexer(const std::string &inputAsString) {
+  std::deque<Token> tokens;
+  std::string symbolBuffer = "";
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
-    const string symbol(1, inputAsString[i]);
+    const std::string symbol(1, inputAsString[i]);
 
     if (isNumeric(symbol)) {
       symbolBuffer += inputAsString[i];
@@ -74,7 +72,7 @@ deque<Token> lexer(const string &inputAsString) {
         tokens.push_back({symbol, binaryOp});
 
       } else if (symbol != " ") {
-        throw invalid_argument("ERROR: unrecognized symbol \"" + symbol + "\"");
+        throw std::invalid_argument("unrecognized symbol \"" + symbol + "\"");
       }
     }
   }
@@ -86,16 +84,16 @@ deque<Token> lexer(const string &inputAsString) {
   return tokens;
 }
 
-size_t getPreviousOpRank(const stack<Token> &opStack) {
+size_t getTop(const std::stack<Token> &opStack) {
   if (!opStack.empty()) {
     return opRank.at(opStack.top().symbol);
   }
   return 0;
 }
 
-deque<Token> shuntingYard(deque<Token> inputQueue) {
-  stack<Token> opStack;
-  deque<Token> outputQueue;
+std::deque<Token> shuntingYard(std::deque<Token> inputQueue) {
+  std::stack<Token> opStack;
+  std::deque<Token> outputQueue;
 
   for (Token &token : inputQueue) {
     if (token.type == value) {
@@ -105,16 +103,22 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
     // flush opStack until matching parenthesis is reached
     if (token.symbol == ")") {
+      if (opStack.empty()) {
+        throw std::invalid_argument("mismatched parentheses.");
+      }
       while (opStack.top().symbol != "(") {
         outputQueue.push_back(opStack.top());
         opStack.pop();
+        if (opStack.empty()) {
+          throw std::invalid_argument("mismatched parentheses.");
+        }
       }
       opStack.pop();  // remove open parenthesis
       continue;
     }
 
     const size_t currentOpRank = opRank.at(token.symbol);
-    size_t previousOpRank = getPreviousOpRank(opStack);
+    size_t previousOpRank = getTop(opStack);
 
     while (token.symbol != "(" && currentOpRank <= previousOpRank) {
       // nested exponents are unique - must be evaluated right to left
@@ -124,7 +128,7 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
       outputQueue.push_back(opStack.top());
       opStack.pop();
-      previousOpRank = getPreviousOpRank(opStack);
+      previousOpRank = getTop(opStack);
     }
 
     opStack.push(token);
@@ -132,6 +136,9 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
 
   // flush remaining operators
   while (!opStack.empty()) {
+    if (opStack.top().type == parenthesis) {
+      throw std::invalid_argument("mismatched parentheses.");
+    }
     outputQueue.push_back(opStack.top());
     opStack.pop();
   }
@@ -139,8 +146,8 @@ deque<Token> shuntingYard(deque<Token> inputQueue) {
   return outputQueue;
 }
 
-double evalRpnNotation(const deque<Token> &rpnNotation) {
-  stack<double> result;
+double evalRpnNotation(const std::deque<Token> &rpnNotation) {
+  std::stack<double> result;
 
   for (const Token &token : rpnNotation) {
     // handle numerics
@@ -151,8 +158,8 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
     // handle unary operators
     if (result.empty()) {
-      throw invalid_argument("ERROR: invalid expression involving operator \"" +
-                             token.symbol + " \"");
+      throw std::invalid_argument("invalid expression involving operator \"" +
+                                  token.symbol + " \"");
     }
     const double operandB = result.top();
     result.pop();
@@ -172,8 +179,8 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
     // handle binary operators
     if (result.empty()) {
-      throw invalid_argument("ERROR: invalid expression involving operator \"" +
-                             token.symbol + "\"");
+      throw std::invalid_argument("invalid expression involving operator \"" +
+                                  token.symbol + "\"");
     }
     const double operandA = result.top();
     result.pop();
@@ -192,7 +199,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 
     } else if (token.symbol == "/") {
       if (!operandB) {
-        throw invalid_argument("ERROR: unable to divide by zero");
+        throw std::invalid_argument("unable to divide by zero");
       }
       result.push(operandA / operandB);
     }
@@ -203,15 +210,15 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
 int main() {
   print("Enter Expression. Type 'exit' to quit.");
   while (true) {
-    const string inputAsString = getString(">> ");
+    const std::string inputAsString = getString(">> ");
     if (inputAsString == "exit") break;
     try {
-      const deque<Token> algNotation = lexer(inputAsString);
-      const deque<Token> rpnNotation = shuntingYard(algNotation);
+      const std::deque<Token> algNotation = lexer(inputAsString);
+      const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
       print(result);
     } catch (const std::exception &e) {
-      std::cerr << e.what() << '\n';
+      std::cerr << "ERROR: " << e.what() << '\n';
     }
   }
   print("Successfully exited");
