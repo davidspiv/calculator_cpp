@@ -9,19 +9,8 @@
 #include "../include/io.h"
 #include "../include/taylorSeries.h"
 #include "../include/token.h"
-
-std::unordered_map<std::string, size_t> opRank = {
-    {"(", 0},   {"+", 1},   {"-", 1},   {"*", 2},   {"/", 2},
-    {"^", 3},   {"neg", 4}, {"sin", 5}, {"cos", 5}, {"tan", 5},
-    {"csc", 5}, {"sec", 5}, {"cot", 5}};
-
-bool isNumeric(const char symbol) { return isdigit(symbol) || symbol == '.'; }
-
-// Determine if '-' represent negation or subtraction
-bool isNegateOp(const std::deque<Token> &tokens) {
-  return tokens.empty() ||
-         (tokens.back().type != value && tokens.back().symbol != ")");
-}
+#include "../include/operators.h"
+#include "../include/helpers.h"
 
 std::deque<Token> lexer(const std::string &inputAsString) {
   std::deque<Token> tokens;
@@ -87,13 +76,6 @@ std::deque<Token> lexer(const std::string &inputAsString) {
   return tokens;
 }
 
-size_t getTop(const std::stack<Token> &opStack) {
-  if (!opStack.empty()) {
-    return opRank.at(opStack.top().symbol);
-  }
-  return 0;
-}
-
 std::deque<Token> shuntingYard(std::deque<Token> inputQueue) {
   std::stack<Token> opStack;
   std::deque<Token> outputQueue;
@@ -121,7 +103,7 @@ std::deque<Token> shuntingYard(std::deque<Token> inputQueue) {
     }
 
     const size_t currentOpRank = opRank.at(token.symbol);
-    size_t previousOpRank = getTop(opStack);
+    size_t previousOpRank = safePeekTop(opStack);
 
     while (token.symbol != "(" && currentOpRank <= previousOpRank) {
       // nested exponents are unique - must be evaluated right to left
@@ -131,7 +113,7 @@ std::deque<Token> shuntingYard(std::deque<Token> inputQueue) {
 
       outputQueue.push_back(opStack.top());
       opStack.pop();
-      previousOpRank = getTop(opStack);
+      previousOpRank = safePeekTop(opStack);
     }
 
     opStack.push(token);
