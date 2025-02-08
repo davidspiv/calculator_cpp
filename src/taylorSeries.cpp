@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 
+#include "../include/token.h"
+
+#define M_PI 3.14159265358979323846
+
 void createFactorialCache(double *factorialCache, size_t iterations) {
   factorialCache[0] = 1;
   for (size_t i = 1; i <= iterations; i++) {
@@ -8,16 +12,16 @@ void createFactorialCache(double *factorialCache, size_t iterations) {
   }
 }
 
-double createCoeff(double denominator, bool &isPositive) {
+double createCoeff(double denominator, const bool &isPositive) {
   double coeff = (1 / denominator);
   coeff = isPositive ? coeff : -coeff;
-  isPositive = !isPositive;
   return coeff;
 }
 
-double taylorSeries(const std::string &type, double radians) {
+double taylorSeries(Token token, double radians) {
   const size_t terms = 50;
-  double result = 0;
+  double evenResult = 0;
+  double oddResult = 0;
   double factorialCache[terms + 1];
   bool isPositive = terms % 4 && terms % 4 != 3;
 
@@ -25,16 +29,35 @@ double taylorSeries(const std::string &type, double radians) {
 
   // Horner's method
   for (int i = terms; i > 0; i--) {
-    if (type == "SIN" && i % 2) {
-      result += createCoeff(factorialCache[i], isPositive);
+    if (i % 2) {
+      evenResult += createCoeff(factorialCache[i], isPositive);
+      isPositive = !isPositive;
+    } else {
+      oddResult += createCoeff(factorialCache[i], isPositive);
     }
-    if (type == "COS" && !(i % 2)) {
-      result += createCoeff(factorialCache[i], isPositive);
-    }
-    result *= radians;
+    evenResult *= radians;
+    oddResult *= radians;
   }
-  if (type == "COS") {
-    result = 1 - result;
+
+  oddResult = 1 - oddResult;
+
+  if (token.symbol == "sin") {
+    return evenResult;
+
+  } else if (token.symbol == "cos") {
+    return oddResult;
+
+  } else if (token.symbol == "tan") {
+    return evenResult / oddResult;
+
+  } else if (token.symbol == "csc") {
+    return 1 / evenResult;
+
+  } else if (token.symbol == "sec") {
+    return 1 / oddResult;
+
+  } else if (token.symbol == "cot") {
+    return oddResult / evenResult;
   }
-  return result;
+  return 0;
 }

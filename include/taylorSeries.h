@@ -3,7 +3,8 @@
 
 #include <string>
 
-double normalizeRadians(double x);
-double taylorSeries(const std::string &type, double radians);
+#include "token.h"
+
+double taylorSeries(Token token, double radians);
 
 #endif

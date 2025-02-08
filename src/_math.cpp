@@ -24,13 +24,3 @@ double _pow(double base, int exp) {
     return base * _pow(base, exp - 1);
   }
 }
-
-double _sin(double radians) {
-  const double normalizedRadians = normalize(radians, 0, 2 * M_PI);
-  return taylorSeries("SIN", normalizedRadians);
-}
-
-double _cos(double radians) {
-  const double normalizedRadians = normalize(radians, 0, 2 * M_PI);
-  return taylorSeries("COS", normalizedRadians);
-}

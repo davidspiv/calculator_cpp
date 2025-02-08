@@ -7,24 +7,15 @@
 
 #include "../include/_math.h"
 #include "../include/io.h"
-
-enum TokenType { value, unaryOp, binaryOp, parenthesis };
-
-struct Token {
-  std::string symbol;
-  TokenType type;
-};
+#include "../include/taylorSeries.h"
+#include "../include/token.h"
 
 std::unordered_map<std::string, size_t> opRank = {
-    {"(", 0}, {"+", 1},   {"-", 1},   {"*", 2},  {"/", 2},
-    {"^", 3}, {"NEG", 4}, {"SIN", 5}, {"COS", 5}};
+    {"(", 0},   {"+", 1},   {"-", 1},   {"*", 2},   {"/", 2},
+    {"^", 3},   {"neg", 4}, {"sin", 5}, {"cos", 5}, {"tan", 5},
+    {"csc", 5}, {"sec", 5}, {"cot", 5}};
 
-bool isNumeric(const std::string &symbol) {
-  if (!symbol.empty() && (isdigit(symbol[0]) || symbol[0] == '.')) {
-    return true;
-  }
-  return !symbol.empty() && (isdigit(symbol[1]) || symbol[1] == '.');
-}
+bool isNumeric(const char symbol) { return isdigit(symbol) || symbol == '.'; }
 
 // Determine if '-' represent negation or subtraction
 bool isNegateOp(const std::deque<Token> &tokens) {
@@ -34,53 +25,65 @@ bool isNegateOp(const std::deque<Token> &tokens) {
 
 std::deque<Token> lexer(const std::string &inputAsString) {
   std::deque<Token> tokens;
-  std::string symbolBuffer = "";
+  std::string valueBuff = "";
+  std::string opSymbolBuff = "";
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
-    const std::string symbol(1, inputAsString[i]);
+    const char symbol = inputAsString[i];
+    const std::string symbolAsString = std::string(1, symbol);
 
+    // handle numeric buffer for multi-char values
     if (isNumeric(symbol)) {
-      symbolBuffer += inputAsString[i];
+      valueBuff += symbol;
+      continue;
     }
 
-    if (!isNumeric(symbol)) {
-      // process numeric buffer first
-      if (!symbolBuffer.empty()) {
-        tokens.push_back({symbolBuffer, value});
-        symbolBuffer.clear();
+    // handle operator buffer for multi-char names
+    if (isalpha(symbol)) {
+      opSymbolBuff += symbol;
+      if (opSymbolBuff.length() < 3) {
+        continue;
       }
-
-      // process operators and parenthesis
-      if (symbol == "s") {
-        tokens.push_back({"SIN", unaryOp});
-        i += 2;
-
-      } else if (symbol == "c") {
-        tokens.push_back({"COS", unaryOp});
-        i += 2;
-
-      } else if (symbol == "(" || symbol == ")") {
-        tokens.push_back({symbol, parenthesis});
-
-      } else if (symbol == "-" && isNegateOp(tokens)) {
-        tokens.push_back({"NEG", unaryOp});
-
-      } else if (symbol == "-") {
-        tokens.push_back({symbol, binaryOp});
-
-      } else if (opRank.find(symbol) != opRank.end()) {
-        tokens.push_back({symbol, binaryOp});
-
-      } else if (symbol != " ") {
-        throw std::invalid_argument("unrecognized symbol \"" + symbol + "\"");
+      if (opRank.find(opSymbolBuff) == opRank.end()) {
+        throw std::invalid_argument("unrecognized function \"" + opSymbolBuff +
+                                    "\".");
       }
+    }
+
+    // create value token
+    if (!valueBuff.empty()) {
+      tokens.push_back({valueBuff, value});
+      valueBuff.clear();
+    }
+
+    // create non-numeric token
+    if (!opSymbolBuff.empty()) {
+      tokens.push_back({opSymbolBuff, unaryOp});
+      opSymbolBuff.clear();
+
+    } else if (symbol == '(' || symbol == ')') {
+      tokens.push_back({symbolAsString, parenthesis});
+
+    } else if (symbol == '-' && isNegateOp(tokens)) {
+      tokens.push_back({"neg", unaryOp});
+
+    } else if (symbol == '-') {
+      tokens.push_back({symbolAsString, binaryOp});
+
+    } else if (opRank.find(symbolAsString) != opRank.end()) {
+      tokens.push_back({symbolAsString, binaryOp});
+
+    } else if (symbol != ' ') {
+      throw std::invalid_argument("unrecognized symbol \"" + symbolAsString +
+                                  "\".");
     }
   }
 
-  // flush remaining numeric values
-  if (!symbolBuffer.empty()) {
-    tokens.push_back({symbolBuffer, value});
+  // flush remaining values
+  if (!valueBuff.empty()) {
+    tokens.push_back({valueBuff, value});
   }
+
   return tokens;
 }
 
@@ -159,29 +162,27 @@ double evalRpnNotation(const std::deque<Token> &rpnNotation) {
     // handle unary operators
     if (result.empty()) {
       throw std::invalid_argument("invalid expression involving operator \"" +
-                                  token.symbol + " \"");
+                                  token.symbol + " \".");
     }
     const double operandB = result.top();
     result.pop();
 
-    if (token.symbol == "NEG") {
+    if (token.symbol == "neg") {
       result.push(operandB * -1);
       continue;
     }
 
-    if (token.symbol == "SIN") {
-      result.push(_sin(operandB));
-      continue;
-    } else if (token.symbol == "COS") {
-      result.push(_cos(operandB));
+    if (token.type == unaryOp) {
+      result.push(taylorSeries(token, operandB));
       continue;
     }
 
     // handle binary operators
     if (result.empty()) {
       throw std::invalid_argument("invalid expression involving operator \"" +
-                                  token.symbol + "\"");
+                                  token.symbol + "\".");
     }
+
     const double operandA = result.top();
     result.pop();
 
@@ -199,7 +200,7 @@ double evalRpnNotation(const std::deque<Token> &rpnNotation) {
 
     } else if (token.symbol == "/") {
       if (!operandB) {
-        throw std::invalid_argument("unable to divide by zero");
+        throw std::invalid_argument("unable to divide by zero.");
       }
       result.push(operandA / operandB);
     }

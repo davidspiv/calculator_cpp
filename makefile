@@ -6,7 +6,7 @@ default: build/main.o build/io.o build/taylorSeries.o build/_math.o
 	$(CC) build/main.o build/io.o build/taylorSeries.o build/_math.o -o $(EXENAME)
 
 #order-only-prerequisite for build dir
-build/main.o: src/main.cpp include/io.h include/taylorSeries.h include/_math.h
+build/main.o: src/main.cpp include/io.h include/taylorSeries.h include/token.h include/_math.h
 	$(CC) $(CFLAGS) src/main.cpp -o build/main.o
 
 build/io.o: src/io.cpp include/io.h | build
