@@ -38,6 +38,12 @@ std::deque<Token> lexer(const std::string &inputAsString) {
       continue;
     }
 
+    // create value token
+    if (!valueBuff.empty()) {
+      tokens.push_back({valueBuff, value});
+      valueBuff.clear();
+    }
+
     // handle operator buffer for multi-char names
     if (isalpha(symbol)) {
       opSymbolBuff += symbol;
@@ -48,12 +54,6 @@ std::deque<Token> lexer(const std::string &inputAsString) {
         throw std::invalid_argument("unrecognized function \"" + opSymbolBuff +
                                     "\".");
       }
-    }
-
-    // create value token
-    if (!valueBuff.empty()) {
-      tokens.push_back({valueBuff, value});
-      valueBuff.clear();
     }
 
     // create non-numeric token

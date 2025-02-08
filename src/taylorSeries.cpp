@@ -3,8 +3,6 @@
 
 #include "../include/token.h"
 
-#define M_PI 3.14159265358979323846
-
 void createFactorialCache(double *factorialCache, size_t iterations) {
   factorialCache[0] = 1;
   for (size_t i = 1; i <= iterations; i++) {
@@ -20,10 +18,10 @@ double createCoeff(double denominator, const bool &isPositive) {
 
 double taylorSeries(Token token, double radians) {
   const size_t terms = 50;
-  double evenResult = 0;
-  double oddResult = 0;
   double factorialCache[terms + 1];
   bool isPositive = terms % 4 && terms % 4 != 3;
+  double evenResult = 0;
+  double oddResult = 0;
 
   createFactorialCache(&factorialCache[0], terms);
 
