@@ -1,4 +1,3 @@
-#include <cmath>
 #include <deque>
 #include <iostream>
 #include <stack>
@@ -6,8 +5,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "../include/_math.h"
 #include "../include/io.h"
-#include "../include/math.h"
 
 using namespace std;
 
@@ -180,7 +179,7 @@ double evalRpnNotation(const deque<Token> &rpnNotation) {
     result.pop();
 
     if (token.symbol == "^") {
-      result.push(pow(operandA, operandB));
+      result.push(_pow(operandA, operandB));
 
     } else if (token.symbol == "+") {
       result.push(operandA + operandB);

@@ -3,7 +3,6 @@
 
 double _cos(double radians);
 double _sin(double radians);
-double _pow(double base, double exponent);
-double _abs(double value);
+double _pow(double x, int n);
 
 #endif

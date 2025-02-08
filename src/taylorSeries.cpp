@@ -1,8 +1,6 @@
 #include <iostream>
 #include <string>
 
-#include "math.h"
-
 void createFactorialCache(double *factorialCache, size_t iterations) {
   factorialCache[0] = 1;
   for (size_t i = 1; i <= iterations; i++) {
