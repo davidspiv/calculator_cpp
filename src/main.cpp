@@ -4,6 +4,7 @@
 #include <string>
 
 #include "../include/evalRpnNotation.h"
+#include "../include/historyCache.h"
 #include "../include/io.h"
 #include "../include/lexer.h"
 #include "../include/shuntingYard.h"
@@ -11,7 +12,7 @@
 
 int main() {
   print("Enter Expression. Type 'exit' to quit.");
-  std::list<std::string> history;
+  HistoryCache history;
 
   while (true) {
     const std::string inputAsString = getString(history);
@@ -20,7 +21,7 @@ int main() {
 
     try {
       const std::deque<Token> algNotation = lexer(inputAsString);
-      history.push_back(inputAsString);
+      history.addEntry(inputAsString);
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
       print(result);

@@ -2,11 +2,11 @@ CC=g++
 CFLAGS= -c -g -Wall -std=c++17 -fpermissive
 EXENAME= main
 
-default: build/main.o build/io.o build/taylorSeries.o build/_math.o build/lexer.o build/shuntingYard.o build/evalRpnNotation.o
-	$(CC) build/main.o build/io.o build/taylorSeries.o build/_math.o build/lexer.o build/shuntingYard.o build/evalRpnNotation.o -o $(EXENAME)
+default: build/main.o build/io.o build/taylorSeries.o build/_math.o build/lexer.o build/shuntingYard.o build/evalRpnNotation.o build/historyCache.o
+	$(CC) build/main.o build/io.o build/taylorSeries.o build/_math.o build/lexer.o build/shuntingYard.o build/evalRpnNotation.o build/historyCache.o -o $(EXENAME)
 
 #order-only-prerequisite for build dir
-build/main.o: src/main.cpp include/io.h include/taylorSeries.h include/token.h include/_math.h include/lexer.h include/shuntingYard.h include/evalRpnNotation.h
+build/main.o: src/main.cpp include/io.h include/taylorSeries.h include/token.h include/_math.h include/lexer.h include/shuntingYard.h include/evalRpnNotation.h include/historyCache.h
 	$(CC) $(CFLAGS) src/main.cpp -o build/main.o
 
 build/io.o: src/io.cpp include/io.h | build
@@ -26,6 +26,9 @@ build/shuntingYard.o: src/shuntingYard.cpp include/shuntingYard.h | build
 
 build/evalRpnNotation.o: src/evalRpnNotation.cpp include/evalRpnNotation.h | build
 	$(CC) $(CFLAGS) src/evalRpnNotation.cpp -o build/evalRpnNotation.o
+
+build/historyCache.o: src/historyCache.cpp include/historyCache.h | build
+	$(CC) $(CFLAGS) src/historyCache.cpp -o build/historyCache.o
 
 build:
 	mkdir -p $@

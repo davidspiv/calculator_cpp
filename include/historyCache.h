@@ -1,3 +1,6 @@
+#ifndef HISTORYCACHE_H
+#define HISTORYCACHE_H
+
 #include <iostream>
 #include <list>
 #include <string>
@@ -10,9 +13,15 @@ class HistoryCache {
 
   void moveBackward();
 
-  void showCurrent() const;
+  void beginning();
+
+  std::string getCurrent() const;
+
+  bool empty();
 
  private:
   std::list<std::string> history;
   std::list<std::string>::iterator iter = history.end();
 };
+
+#endif

@@ -12,23 +12,19 @@ void HistoryCache::addEntry(const std::string& entry) {
 void HistoryCache::moveForward() {
   if (iter != std::prev(history.end())) {
     ++iter;
-  } else {
-    std::cout << "End of history.\n";
   }
 }
 
 void HistoryCache::moveBackward() {
   if (iter != history.begin()) {
     --iter;
-  } else {
-    std::cout << "Beginning of history.\n";
   }
 }
 
-void HistoryCache::showCurrent() const {
-  if (!history.empty()) {
-    std::cout << "Current: " << *iter << '\n';
-  } else {
-    std::cout << "History is empty.\n";
-  }
+void HistoryCache::beginning() { iter = history.end(); }
+
+bool HistoryCache::empty() { return history.empty(); }
+
+std::string HistoryCache::getCurrent() const {
+  return history.empty() ? "" : *iter;
 }

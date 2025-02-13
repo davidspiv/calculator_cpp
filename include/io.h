@@ -6,7 +6,9 @@
 #include <list>
 #include <string>
 
-std::string getString(std::list<std::string> &history);
+#include "../include/historyCache.h"
+
+std::string getString(HistoryCache &history);
 
 template <typename T>
 void print(T output, const std::string &label = "") {

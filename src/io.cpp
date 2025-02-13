@@ -4,6 +4,9 @@
 #include <iostream>
 #include <list>
 #include <string>
+
+#include "../include/historyCache.h"
+
 void setNonCanonicalMode(struct termios &old_settings) {
   struct termios newSettings;
   tcgetattr(STDIN_FILENO, &old_settings);  // Get current terminal attributes
@@ -20,8 +23,7 @@ void restoreCanonicalMode(const struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
 }
 
-std::string getString(std::list<std::string> &history) {
-  std::list<std::string>::iterator it = history.end();
+std::string getString(HistoryCache &history) {
   struct termios old_tio;
   std::cout << ">>  " << std::flush;
   const std::string csiCommand = "\r\033[K";
@@ -43,11 +45,10 @@ std::string getString(std::list<std::string> &history) {
       char seq[2];
       if (read(STDIN_FILENO, &seq[0], 1) == 1 &&
           read(STDIN_FILENO, &seq[1], 1) == 1) {
-        if (seq[0] == '[' && seq[1] == 'A' && !history.empty()) {
-          if (it != history.begin()) {
-            --it;
-          }
-          std::cout << csiCommand << ">>  " << *it << std::flush;
+        if (seq[0] == '[' && seq[1] == 'A') {
+          input = history.getCurrent();
+          std::cout << csiCommand << ">>  " << input << std::flush;
+          history.moveBackward();
         }
       }
     } else {  // Normal character input
