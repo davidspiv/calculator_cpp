@@ -25,7 +25,6 @@ void restoreCanonicalMode(const struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
 }
 
-// TRUNCATE THE HISTORY DISPLAY
 std::string getString() {
   struct termios old_tio;
   std::cout << ">>  " << std::flush;
