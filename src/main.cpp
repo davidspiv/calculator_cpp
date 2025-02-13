@@ -18,6 +18,7 @@ int main() {
     const std::string inputAsString = getString(history);
 
     if (inputAsString == "exit") break;
+    if (inputAsString == "") continue;
 
     try {
       const std::deque<Token> algNotation = lexer(inputAsString);

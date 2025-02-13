@@ -59,12 +59,7 @@ std::string getString(HistoryCache &history) {
             default:
               continue;
           }
-          if (!isSuccessful) {
-            input = "";
-            history.beginning();
-          } else {
-            input = history.getCurrent();
-          }
+          input = isSuccessful ? history.getCurrent() : "";
           std::cout << csiCommand << ">>  " << input << std::flush;
         }
       }
@@ -74,7 +69,11 @@ std::string getString(HistoryCache &history) {
     }
   }
   history.beginning();
-  std::cout << std::endl;
+  if (!input.empty()) {
+    std::cout << std::endl;
+  } else {
+    std::cout << csiCommand;
+  }
   restoreCanonicalMode(old_tio);
   return input;
 }
