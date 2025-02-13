@@ -22,7 +22,6 @@ int main() {
 
     try {
       const std::deque<Token> algNotation = lexer(inputAsString);
-      history.addEntry(inputAsString);
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
       print(result);

@@ -68,7 +68,11 @@ std::string getString(HistoryCache &history) {
       std::cout << ch << std::flush;
     }
   }
-  history.beginning();
+  if (history.isBeginning()) {
+    history.addEntry(input);
+  } else {
+    history.beginning();
+  }
   if (!input.empty()) {
     std::cout << std::endl;
   } else {
