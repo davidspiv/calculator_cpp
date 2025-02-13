@@ -63,7 +63,9 @@ std::string getString() {
               continue;
           }
           input = isSuccessful ? history.getCurrent() : "";
-          std::cout << csiCommand << ">>  " << input << std::flush;
+          const std::string displayInput =
+              input.length() < 79 ? input : input.substr(1, 76) + "...";
+          std::cout << csiCommand << ">>  " << displayInput << std::flush;
         }
       }
     } else {  // Normal character input
@@ -77,6 +79,9 @@ std::string getString() {
     history.beginning();
   }
   if (!input.empty()) {
+    if (input.length() >= 79) {
+      std::cout << csiCommand << ">>  " << input << std::flush;
+    }
     std::cout << std::endl;
   } else {
     std::cout << csiCommand;
