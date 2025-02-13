@@ -9,10 +9,10 @@
 
 HistoryCache historyCache;
 
-void setNonCanonicalMode(struct termios &old_settings) {
+void setNonCanonicalMode(struct termios &initialSettings) {
   struct termios newSettings;
-  tcgetattr(STDIN_FILENO, &old_settings);  // Get current terminal attributes
-  newSettings = old_settings;
+  tcgetattr(STDIN_FILENO, &initialSettings);  // Get current terminal attributes
+  newSettings = initialSettings;
 
   newSettings.c_lflag &= ~(ICANON | ECHO);  // Disable canonical mode and echo
   newSettings.c_cc[VMIN] = 1;               // Read one character at a time
@@ -21,8 +21,9 @@ void setNonCanonicalMode(struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);  // Apply new settings
 }
 
-void restoreCanonicalMode(const struct termios &old_settings) {
-  tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
+void restoreCanonicalMode(const struct termios &initialSettings) {
+  tcsetattr(STDIN_FILENO, TCSANOW,
+            &initialSettings);  // Restore initial settings
 }
 
 std::string displayOneLine(std::string input) {
@@ -37,24 +38,23 @@ std::string getString() {
     historyCache.addEntry("3*3");
   }
 
-  struct termios old_tio;
+  struct termios terminalSettings;
   std::cout << ">>  " << std::flush;
   const std::string csiCommand = "\r\033[K";
   std::string input;
   char ch;
 
-  setNonCanonicalMode(old_tio);
+  setNonCanonicalMode(terminalSettings);
 
   while (read(STDIN_FILENO, &ch, 1) == 1) {
-    if (ch == '\n') break;  // Stop on Enter key
+    if (ch == '\n') break;
 
-    if (ch == 0x7F) {  // Handle Backspace (DEL)
+    if (ch == 0x7F) {  // Handle backspace
       if (!input.empty()) {
+        std::cout << "\b \b" << std::flush;
         input.pop_back();
-        std::cout << "\b \b"
-                  << std::flush;  // Move cursor back, erase char, move back
       }
-    } else if (ch == '\033') {  // Possible arrow key (Escape sequence)
+    } else if (ch == '\033') {  // Handle escape sequence
       char seq[2];
       if (read(STDIN_FILENO, &seq[0], 1) == 1 &&
           read(STDIN_FILENO, &seq[1], 1) == 1) {
@@ -83,13 +83,15 @@ std::string getString() {
     }
   }
 
-  if ((historyCache.isBeginning() || historyCache.getCurrent() != input) &&
-      !input.empty()) {
-    historyCache.addEntry(input);
-  }
+  restoreCanonicalMode(terminalSettings);
 
   if (input.empty()) {
     std::cout << csiCommand;
+    return "";
+  }
+
+  if (historyCache.isBeginning() || historyCache.getCurrent() != input) {
+    historyCache.addEntry(input);
   }
 
   if (input.length() != displayOneLine(input).length()) {
@@ -97,6 +99,5 @@ std::string getString() {
   }
 
   historyCache.beginning();
-  restoreCanonicalMode(old_tio);
   return input;
 }
