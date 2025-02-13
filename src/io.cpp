@@ -25,6 +25,10 @@ void restoreCanonicalMode(const struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
 }
 
+std::string displayOneLine(std::string input) {
+  return input.length() < 79 ? input : input.substr(1, 76) + "...";
+}
+
 std::string getString() {
   // TEST
   if (historyCache.empty()) {
@@ -69,9 +73,8 @@ std::string getString() {
               continue;
           }
           input = isSuccessful ? historyCache.getCurrent() : "";
-          const std::string displayHistory =
-              input.length() < 79 ? input : input.substr(1, 76) + "...";
-          std::cout << csiCommand << ">>  " << displayHistory << std::flush;
+          std::cout << csiCommand << ">>  " << displayOneLine(input)
+                    << std::flush;
         }
       }
     } else {  // Normal character input
@@ -89,7 +92,7 @@ std::string getString() {
     std::cout << csiCommand;
   }
 
-  if (input.length() >= 79) {
+  if (input.length() != displayOneLine(input).length()) {
     std::cout << csiCommand << ">>  " << input << std::flush;
   }
 
