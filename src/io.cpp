@@ -7,6 +7,8 @@
 
 #include "../include/historyCache.h"
 
+HistoryCache history;
+
 void setNonCanonicalMode(struct termios &old_settings) {
   struct termios newSettings;
   tcgetattr(STDIN_FILENO, &old_settings);  // Get current terminal attributes
@@ -23,7 +25,8 @@ void restoreCanonicalMode(const struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
 }
 
-std::string getString(HistoryCache &history) {
+// TRUNCATE THE HISTORY DISPLAY
+std::string getString() {
   struct termios old_tio;
   std::cout << ">>  " << std::flush;
   const std::string csiCommand = "\r\033[K";
@@ -68,7 +71,7 @@ std::string getString(HistoryCache &history) {
       std::cout << ch << std::flush;
     }
   }
-  if (history.isBeginning()) {
+  if (history.isBeginning() && !input.empty()) {
     history.addEntry(input);
   } else {
     history.beginning();

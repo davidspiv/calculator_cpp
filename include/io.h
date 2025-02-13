@@ -8,7 +8,7 @@
 
 #include "../include/historyCache.h"
 
-std::string getString(HistoryCache &history);
+std::string getString();
 
 template <typename T>
 void print(T output, const std::string &label = "") {

@@ -12,10 +12,9 @@
 
 int main() {
   print("Enter Expression. Type 'exit' to quit.");
-  HistoryCache history;
 
   while (true) {
-    const std::string inputAsString = getString(history);
+    const std::string inputAsString = getString();
 
     if (inputAsString == "exit") break;
     if (inputAsString == "") continue;
