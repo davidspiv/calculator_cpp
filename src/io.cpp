@@ -29,6 +29,7 @@ std::string getString(HistoryCache &history) {
   const std::string csiCommand = "\r\033[K";
   std::string input;
   char ch;
+  bool isSuccessful = true;
 
   setNonCanonicalMode(old_tio);
 
@@ -45,10 +46,27 @@ std::string getString(HistoryCache &history) {
       char seq[2];
       if (read(STDIN_FILENO, &seq[0], 1) == 1 &&
           read(STDIN_FILENO, &seq[1], 1) == 1) {
-        if (seq[0] == '[' && seq[1] == 'A') {
-          input = history.getCurrent();
+        if (seq[0] == '[') {
+          switch (seq[1]) {
+            case 'A':
+              history.moveBackward();
+              break;
+
+            case 'B':
+              isSuccessful = history.moveForward();
+              break;
+
+            default:
+              continue;
+          }
+          if (!isSuccessful) {
+            input = "";
+            history.beginning();
+            isSuccessful = true;
+          } else {
+            input = history.getCurrent();
+          }
           std::cout << csiCommand << ">>  " << input << std::flush;
-          history.moveBackward();
         }
       }
     } else {  // Normal character input
@@ -56,7 +74,8 @@ std::string getString(HistoryCache &history) {
       std::cout << ch << std::flush;
     }
   }
-
+  history.beginning();
+  isSuccessful = true;
   std::cout << std::endl;
   restoreCanonicalMode(old_tio);
   return input;

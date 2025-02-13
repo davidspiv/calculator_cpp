@@ -9,11 +9,13 @@ class HistoryCache {
  public:
   void addEntry(const std::string& entry);
 
-  void moveForward();
+  bool moveForward();
 
   void moveBackward();
 
   void beginning();
+
+  bool isBeginning();
 
   std::string getCurrent() const;
 

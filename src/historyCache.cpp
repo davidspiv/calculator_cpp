@@ -6,12 +6,14 @@
 
 void HistoryCache::addEntry(const std::string& entry) {
   history.push_back(entry);
-  iter = std::prev(history.end());  // Move iterator to the newest entry
 }
 
-void HistoryCache::moveForward() {
-  if (iter != std::prev(history.end())) {
+bool HistoryCache::moveForward() {
+  if (iter != std::prev(history.end()) && iter != history.end()) {
     ++iter;
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -22,6 +24,8 @@ void HistoryCache::moveBackward() {
 }
 
 void HistoryCache::beginning() { iter = history.end(); }
+
+bool HistoryCache::isBeginning() { return iter == history.end(); }
 
 bool HistoryCache::empty() { return history.empty(); }
 
