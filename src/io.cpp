@@ -44,10 +44,10 @@ std::string getString(std::list<std::string> &history) {
       if (read(STDIN_FILENO, &seq[0], 1) == 1 &&
           read(STDIN_FILENO, &seq[1], 1) == 1) {
         if (seq[0] == '[' && seq[1] == 'A' && !history.empty()) {
-          std::cout << csiCommand << ">>  " << *it << std::flush;
           if (it != history.begin()) {
             --it;
           }
+          std::cout << csiCommand << ">>  " << *it << std::flush;
         }
       }
     } else {  // Normal character input
