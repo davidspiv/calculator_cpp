@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-std::string getString(const std::string &prompt);
+std::string getLine();
 
 template <typename T>
 void print(T output, const std::string &label = "") {
