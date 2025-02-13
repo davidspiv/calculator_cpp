@@ -7,7 +7,7 @@
 
 #include "../include/historyCache.h"
 
-HistoryCache history;
+HistoryCache historyCache;
 
 void setNonCanonicalMode(struct termios &old_settings) {
   struct termios newSettings;
@@ -26,6 +26,13 @@ void restoreCanonicalMode(const struct termios &old_settings) {
 }
 
 std::string getString() {
+  // TEST
+  if (historyCache.empty()) {
+    historyCache.addEntry("1*1");
+    historyCache.addEntry("2*2");
+    historyCache.addEntry("3*3");
+  }
+
   struct termios old_tio;
   std::cout << ">>  " << std::flush;
   const std::string csiCommand = "\r\033[K";
@@ -51,17 +58,17 @@ std::string getString() {
           bool isSuccessful = true;
           switch (seq[1]) {
             case 'A':
-              history.moveBackward();
+              historyCache.moveBackward();
               break;
 
             case 'B':
-              isSuccessful = history.moveForward();
+              isSuccessful = historyCache.moveForward();
               break;
 
             default:
               continue;
           }
-          input = isSuccessful ? history.getCurrent() : "";
+          input = isSuccessful ? historyCache.getCurrent() : "";
           const std::string displayInput =
               input.length() < 79 ? input : input.substr(1, 76) + "...";
           std::cout << csiCommand << ">>  " << displayInput << std::flush;
@@ -72,11 +79,12 @@ std::string getString() {
       std::cout << ch << std::flush;
     }
   }
-  if (history.isBeginning() && !input.empty()) {
-    history.addEntry(input);
-  } else {
-    history.beginning();
+  if ((historyCache.isBeginning() || historyCache.getCurrent() != input) &&
+      !input.empty()) {
+    historyCache.addEntry(input);
   }
+  historyCache.beginning();
+
   if (!input.empty()) {
     if (input.length() >= 79) {
       std::cout << csiCommand << ">>  " << input << std::flush;

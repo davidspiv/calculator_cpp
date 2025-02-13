@@ -1,4 +1,5 @@
 #include <deque>
+#include <iostream>
 #include <list>
 #include <stdexcept>
 #include <string>
@@ -23,7 +24,7 @@ int main() {
       const std::deque<Token> algNotation = lexer(inputAsString);
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
-      print(result);
+      std::cout << "\033[32m" << result << "\033[0m" << std::endl;
 
     } catch (const std::exception &e) {
       std::cerr << "ERROR: " << e.what() << '\n';
