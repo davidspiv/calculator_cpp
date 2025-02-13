@@ -69,9 +69,9 @@ std::string getString() {
               continue;
           }
           input = isSuccessful ? historyCache.getCurrent() : "";
-          const std::string displayInput =
+          const std::string displayHistory =
               input.length() < 79 ? input : input.substr(1, 76) + "...";
-          std::cout << csiCommand << ">>  " << displayInput << std::flush;
+          std::cout << csiCommand << ">>  " << displayHistory << std::flush;
         }
       }
     } else {  // Normal character input
@@ -79,20 +79,21 @@ std::string getString() {
       std::cout << ch << std::flush;
     }
   }
+
   if ((historyCache.isBeginning() || historyCache.getCurrent() != input) &&
       !input.empty()) {
     historyCache.addEntry(input);
   }
-  historyCache.beginning();
 
-  if (!input.empty()) {
-    if (input.length() >= 79) {
-      std::cout << csiCommand << ">>  " << input << std::flush;
-    }
-    std::cout << std::endl;
-  } else {
+  if (input.empty()) {
     std::cout << csiCommand;
   }
+
+  if (input.length() >= 79) {
+    std::cout << csiCommand << ">>  " << input << std::flush;
+  }
+
+  historyCache.beginning();
   restoreCanonicalMode(old_tio);
   return input;
 }

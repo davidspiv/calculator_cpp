@@ -17,14 +17,14 @@ int main() {
   while (true) {
     const std::string inputAsString = getString();
 
-    if (inputAsString == "exit") break;
     if (inputAsString == "") continue;
+    if (inputAsString == "exit") break;
 
     try {
       const std::deque<Token> algNotation = lexer(inputAsString);
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
-      std::cout << "\033[32m" << result << "\033[0m" << std::endl;
+      std::cout << std::endl << "\033[32m" << result << "\033[0m" << std::endl;
 
     } catch (const std::exception &e) {
       std::cerr << "ERROR: " << e.what() << '\n';
