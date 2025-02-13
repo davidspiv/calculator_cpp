@@ -3,9 +3,10 @@
 
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <string>
 
-std::string getLine();
+std::string getString(std::list<std::string> &history);
 
 template <typename T>
 void print(T output, const std::string &label = "") {

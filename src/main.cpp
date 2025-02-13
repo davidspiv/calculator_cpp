@@ -1,4 +1,5 @@
 #include <deque>
+#include <list>
 #include <stdexcept>
 #include <string>
 
@@ -10,14 +11,16 @@
 
 int main() {
   print("Enter Expression. Type 'exit' to quit.");
+  std::list<std::string> history;
 
   while (true) {
-    const std::string inputAsString = getLine();
+    const std::string inputAsString = getString(history);
 
     if (inputAsString == "exit") break;
 
     try {
       const std::deque<Token> algNotation = lexer(inputAsString);
+      history.push_back(inputAsString);
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       const double result = evalRpnNotation(rpnNotation);
       print(result);

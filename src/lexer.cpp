@@ -20,6 +20,7 @@ std::deque<Token> lexer(const std::string &inputAsString) {
 
   for (size_t i = 0; i < inputAsString.length(); i++) {
     const char symbol = inputAsString[i];
+
     const std::string symbolAsString = std::string(1, symbol);
 
     // handle numeric buffer for multi-char values

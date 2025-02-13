@@ -2,8 +2,8 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <list>
 #include <string>
-
 void setNonCanonicalMode(struct termios &old_settings) {
   struct termios newSettings;
   tcgetattr(STDIN_FILENO, &old_settings);  // Get current terminal attributes
@@ -20,8 +20,8 @@ void restoreCanonicalMode(const struct termios &old_settings) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);  // Restore old settings
 }
 
-std::string getLine() {
-  const std::string historyString = "Last History";
+std::string getString(std::list<std::string> &history) {
+  std::list<std::string>::iterator it = history.end();
   struct termios old_tio;
   std::cout << ">>  " << std::flush;
   const std::string csiCommand = "\r\033[K";
@@ -43,9 +43,11 @@ std::string getLine() {
       char seq[2];
       if (read(STDIN_FILENO, &seq[0], 1) == 1 &&
           read(STDIN_FILENO, &seq[1], 1) == 1) {
-        if (seq[0] == '[' && seq[1] == 'A') {
-          std::cout << csiCommand << ">>  " << historyString << std::flush;
-          input = historyString;
+        if (seq[0] == '[' && seq[1] == 'A' && !history.empty()) {
+          std::cout << csiCommand << ">>  " << *it << std::flush;
+          if (it != history.begin()) {
+            --it;
+          }
         }
       }
     } else {  // Normal character input

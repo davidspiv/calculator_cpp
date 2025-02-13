@@ -1,7 +1,6 @@
 #include <deque>
 #include <iostream>
 #include <stack>
-#include <unordered_map>
 
 #include "../include/_math.h"
 #include "../include/token.h"
