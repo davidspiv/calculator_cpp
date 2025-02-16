@@ -11,6 +11,7 @@
 
 #include "../include/evalRpnNotation.h"
 #include "../include/lexer.h"
+#include "../include/result.h"
 #include "../include/shuntingYard.h"
 
 HistoryCache historyCache;
@@ -45,16 +46,23 @@ std::string getString() {
   }
 
   struct termios terminalSettings;
-  std::cout << ">  " << std::flush;
+  std::cout << std::endl << ">  " << std::flush;
   const std::string csiCommand = "\r\033[K";
   std::string input;
   char ch;
-  bool isFirstIteration = true;
+  std::string valueBuff = "";
+  std::string opSymbolBuff = "";
+  std::deque<Token> algNotation;
 
   setNonCanonicalMode(terminalSettings);
 
   while (read(STDIN_FILENO, &ch, 1) == 1) {
     if (ch == '\n') break;
+
+    if (!algNotation.empty() && algNotation.back().type == value &&
+        !valueBuff.empty()) {
+      algNotation.pop_back();
+    }
 
     if (ch == 0x7F) {  // Handle backspace
       if (!input.empty()) {
@@ -88,27 +96,26 @@ std::string getString() {
       input += ch;
       std::cout << ch;
     }
+
     std::string result = "";
+
     try {
-      const std::deque<Token> algNotation = lexer(input);
+      const TokensResult tokensResult = lexer(ch, valueBuff, opSymbolBuff);
+      for (auto token : tokensResult.tokens) {
+        // std::cout << "TOKEN: " << token.symbol << std::endl;
+        algNotation.push_back(token);
+      }
+      //   for (auto token : algNotation) {
+      //     std::cout << "TOKEN: " << token.symbol << std::endl << std::flush;
+      //   }
       const std::deque<Token> rpnNotation = shuntingYard(algNotation);
       result = std::to_string(evalRpnNotation(rpnNotation));
     } catch (const std::exception &e) {
     }
 
-    // save cursor position, newline, erase line, grey color, writ result,
-    // normal color, restore saved cursor, up one line
-    std::cout << "\0337" << "\n\033[0K"                 // Newline + Clear line
-              << "\033[38;5;8m" << result << "\033[0m"  // Greyed-out result
-              << "\0338";                               // Restore cursor
-
-    if (isFirstIteration) {
-      std::cout << "\033[1A";  // Move cursor up one line
-    }
-
-    std::cout << std::flush;
-
-    isFirstIteration = false;
+    std::cout << "\n"
+              << "\033[0K" << "\033[38;5;8m" << result << "\033[0m" << "\033[F"
+              << ">  " << input << std::flush;
   }
 
   restoreCanonicalMode(terminalSettings);

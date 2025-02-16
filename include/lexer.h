@@ -4,7 +4,10 @@
 #include <deque>
 #include <string>
 
+#include "../include/result.h"
 #include "../include/token.h"
-std::deque<Token> lexer(const std::string &inputAsString);
+
+const TokensResult lexer(const char &symbol, std::string &valueBuff,
+                         std::string &opSymbolBuff);
 
 #endif
